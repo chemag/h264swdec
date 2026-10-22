@@ -10,8 +10,11 @@ include(CMakePackageConfigHelpers)
 include(CTest)
 include(GNUInstallDirs)
 
-add_library(
-  h264swdec
+option(H264SWDEC_CUSTOM_ALLOCATOR
+       "Use an allocator implementation supplied by the final application" OFF)
+
+set(
+  H264SWDEC_SOURCES
   source/h264bsd_transform.c
   source/h264bsd_util.c
   source/h264bsd_byte_stream.c
@@ -38,7 +41,9 @@ add_library(
   source/h264bsd_pic_order_cnt.c
   source/h264bsd_decoder.c
   source/H264SwDecApi.c
+  source/H264SwDecAllocator.c
 )
+add_library(h264swdec ${H264SWDEC_SOURCES})
 add_library(H264SwDec::h264swdec ALIAS h264swdec)
 
 set_target_properties(
@@ -61,6 +66,10 @@ target_include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/source
 )
 
+if(H264SWDEC_CUSTOM_ALLOCATOR)
+  target_compile_definitions(h264swdec PRIVATE H264SWDEC_CUSTOM_ALLOCATOR=1)
+endif()
+
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
   set(H264SWDEC_BUILD_TOOLS_DEFAULT ON)
 else()
@@ -77,6 +86,24 @@ if(H264SWDEC_BUILD_TOOLS)
 endif()
 
 if(BUILD_TESTING)
+  add_library(h264swdec_custom_allocator_test_library STATIC
+              ${H264SWDEC_SOURCES})
+  target_compile_definitions(h264swdec_custom_allocator_test_library
+                             PRIVATE H264SWDEC_CUSTOM_ALLOCATOR=1)
+  target_compile_features(h264swdec_custom_allocator_test_library
+                          PRIVATE c_std_99)
+  target_include_directories(
+    h264swdec_custom_allocator_test_library
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source
+  )
+  add_executable(h264swdec_custom_allocator_test
+                 test/custom_allocator_test.c)
+  target_link_libraries(h264swdec_custom_allocator_test
+                        PRIVATE h264swdec_custom_allocator_test_library)
+  add_test(NAME h264swdec.custom_allocator
+           COMMAND h264swdec_custom_allocator_test)
+
   add_executable(h264swdec_api_smoke test/api_smoke.c)
   target_link_libraries(h264swdec_api_smoke PRIVATE H264SwDec::h264swdec)
   add_test(NAME h264swdec.api_smoke COMMAND h264swdec_api_smoke)

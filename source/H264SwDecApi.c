@@ -36,7 +36,6 @@
     1. Include headers
 ------------------------------------------------------------------------------*/
 
-#include <stdlib.h>
 #include <string.h>
 
 #include "basetype.h"
@@ -79,17 +78,6 @@ H264DEC_EVALUATION      Compile evaluation version, restricts number of frames
 
 void H264SwDecTrace(char *string) {
     UNUSED(string);
-}
-
-void* H264SwDecMalloc(u32 size, u32 num) {
-    if (size > UINT32_MAX / num) {
-        return NULL;
-    }
-    return malloc(size * num);
-}
-
-void H264SwDecFree(void *ptr) {
-    free(ptr);
 }
 
 void H264SwDecMemcpy(void *dest, void *src, u32 count) {
