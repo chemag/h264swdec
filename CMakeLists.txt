@@ -104,6 +104,14 @@ if(BUILD_TESTING)
   add_test(NAME h264swdec.custom_allocator
            COMMAND h264swdec_custom_allocator_test)
 
+  add_executable(h264swdec_deblocking_test test/deblocking_test.c)
+  target_compile_features(h264swdec_deblocking_test PRIVATE c_std_99)
+  target_include_directories(
+    h264swdec_deblocking_test
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc ${CMAKE_CURRENT_SOURCE_DIR}/source
+  )
+  add_test(NAME h264swdec.deblocking COMMAND h264swdec_deblocking_test)
+
   add_executable(h264swdec_api_smoke test/api_smoke.c)
   target_link_libraries(h264swdec_api_smoke PRIVATE H264SwDec::h264swdec)
   add_test(NAME h264swdec.api_smoke COMMAND h264swdec_api_smoke)
