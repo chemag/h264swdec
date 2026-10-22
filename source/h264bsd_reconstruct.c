@@ -1953,7 +1953,8 @@ static void FillRow1(
     ASSERT(ref);
     ASSERT(fill);
 
-    H264SwDecMemcpy(fill, ref, (u32)center);
+    for ( ; center; center--)
+        *fill++ = *ref++;
 
     /*lint -e(715) */
 }

@@ -848,14 +848,39 @@ u8* h264bsdGetRefPicData(dpbStorage_t *dpb, u32 index)
 
 /* Variables */
 
+    u32 i;
+    dpbPicture_t *picture;
+
 /* Code */
 
-    if(index > 16 || dpb->list[index] == NULL)
+    if (dpb == NULL || dpb->buffer == NULL || dpb->list == NULL ||
+        index >= MAX_NUM_REF_IDX_L0_ACTIVE || dpb->dpbSize > MAX_NUM_REF_PICS)
+    {
+        EPRINT("ref_idx_l0");
         return(NULL);
-    else if(!IS_EXISTING(*dpb->list[index]))
+    }
+
+    picture = dpb->list[index];
+    if (picture == NULL || !IS_EXISTING(*picture))
         return(NULL);
-    else
-        return(dpb->list[index]->data);
+
+    for (i = 0; i <= dpb->dpbSize; i++)
+        if (picture == dpb->buffer + i)
+            break;
+    if (i > dpb->dpbSize)
+    {
+        EPRINT("ref_pic_list");
+        return(NULL);
+    }
+
+    if (picture->pAllocatedData == NULL ||
+        picture->data != ALIGN(picture->pAllocatedData, 16))
+    {
+        EPRINT("ref_pic_data");
+        return(NULL);
+    }
+
+    return(picture->data);
 
 }
 
