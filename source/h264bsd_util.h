@@ -115,12 +115,20 @@
 #define DEBUG(args)
 #endif
 
+/* process-wide error callback used by parser validation paths */
+void H264SwDecReportError(const char* feature, const char* sourceFile,
+                          u32 sourceLine);
+
 /* macro for error printing, used only if compiler flag _ERROR_PRINT is
  * defined */
 #ifdef _ERROR_PRINT
-#define EPRINT(msg) fprintf(stderr,"ERROR: %s\n",msg)
+#define EPRINT(msg)                                       \
+  do {                                                    \
+    H264SwDecReportError((msg), __FILE__, (u32)__LINE__); \
+    fprintf(stderr, "ERROR: %s\n", (msg));                \
+  } while (0)
 #else
-#define EPRINT(msg)
+#define EPRINT(msg) H264SwDecReportError((msg), __FILE__, (u32)__LINE__)
 #endif
 
 /* macro to get smaller of two values */

@@ -76,6 +76,22 @@ H264DEC_EVALUATION      Compile evaluation version, restricts number of frames
 #define H264DEC_EVALUATION_LIMIT   500
 #endif
 
+static H264SwDecErrorCallback errorCallback;
+static void* errorCallbackUserData;
+
+void H264SwDecSetErrorCallback(H264SwDecErrorCallback callback,
+                               void* userData) {
+  errorCallback = callback;
+  errorCallbackUserData = userData;
+}
+
+void H264SwDecReportError(const char* feature, const char* sourceFile,
+                          u32 sourceLine) {
+  if (errorCallback != NULL) {
+    errorCallback(feature, sourceFile, sourceLine, errorCallbackUserData);
+  }
+}
+
 void H264SwDecTrace(char *string) {
     UNUSED(string);
 }

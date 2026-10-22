@@ -139,6 +139,14 @@ extern "C"
     4. Prototypes of Decoder API functions
 ------------------------------------------------------------------------------*/
 
+    typedef void (*H264SwDecErrorCallback)(const char* feature,
+                                           const char* sourceFile,
+                                           u32 sourceLine, void* userData);
+
+    /* Process-wide diagnostic callback. Configure before decoding starts. */
+    void H264SwDecSetErrorCallback(H264SwDecErrorCallback callback,
+                                   void* userData);
+
     H264SwDecRet H264SwDecDecode(H264SwDecInst      decInst,
                                  H264SwDecInput     *pInput,
                                  H264SwDecOutput    *pOutput);

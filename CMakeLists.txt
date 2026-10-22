@@ -124,6 +124,16 @@ if(BUILD_TESTING)
   target_link_libraries(h264swdec_api_smoke PRIVATE H264SwDec::h264swdec)
   add_test(NAME h264swdec.api_smoke COMMAND h264swdec_api_smoke)
 
+  add_executable(h264swdec_error_reporting_test test/error_reporting_test.c)
+  target_compile_features(h264swdec_error_reporting_test PRIVATE c_std_99)
+  target_link_libraries(h264swdec_error_reporting_test
+                        PRIVATE H264SwDec::h264swdec)
+  add_test(
+    NAME h264swdec.error_reporting
+    COMMAND h264swdec_error_reporting_test
+            ${CMAKE_CURRENT_SOURCE_DIR}/test/data/unsupported_b_slice.h264
+  )
+
   if(H264SWDEC_BUILD_TOOLS)
     add_test(
       NAME h264swdec.posix_delayed_output
