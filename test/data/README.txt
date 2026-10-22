@@ -8,3 +8,9 @@ delayed_output.h264
 
 invalid.h264
   Synthetic non-H.264 text used to verify clean failure with no output.
+
+unsupported_b_slice.h264
+  Original H.264.1 2016 AVCV1 vector: ba3_sva_c.264 (AVCBS-2)
+  Input SHA-256:
+    f21e84fb480d24d1d912cc61d6487afd4f05b9a4956536313715a5741e3b695b
+  The vector verifies that unsupported B slices produce a clean decoder error.

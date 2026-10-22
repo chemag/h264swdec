@@ -443,6 +443,10 @@ H264SwDecRet H264SwDecDecode(H264SwDecInst decInst, H264SwDecInput *pInput,
                     returnValue = H264SWDEC_STRM_ERR;
                 }
                 break;
+            case H264BSD_ERROR:
+                returnValue = H264SWDEC_STRM_ERR;
+                strmLen = 0;
+                break;
             case H264BSD_MEMALLOC_ERROR:
                 {
                     returnValue = H264SWDEC_MEMFAIL;

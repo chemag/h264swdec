@@ -138,6 +138,18 @@ if(BUILD_TESTING)
         -P ${CMAKE_CURRENT_SOURCE_DIR}/test/check_invalid.cmake
     )
     set_tests_properties(h264swdec.posix_invalid_stream PROPERTIES TIMEOUT 30)
+
+    add_test(
+      NAME h264swdec.posix_unsupported_b_slice
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DDECODER=$<TARGET_FILE:h264swdec_decoder>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/test/data/unsupported_b_slice.h264
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/unsupported_b_slice.yuv
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/test/check_unsupported.cmake
+    )
+    set_tests_properties(h264swdec.posix_unsupported_b_slice
+                         PROPERTIES TIMEOUT 30)
   endif()
 endif()
 
