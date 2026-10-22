@@ -61,10 +61,49 @@ target_include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/source
 )
 
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+  set(H264SWDEC_BUILD_TOOLS_DEFAULT ON)
+else()
+  set(H264SWDEC_BUILD_TOOLS_DEFAULT OFF)
+endif()
+option(H264SWDEC_BUILD_TOOLS "Build the POSIX Annex B decoder"
+       ${H264SWDEC_BUILD_TOOLS_DEFAULT})
+
+if(H264SWDEC_BUILD_TOOLS)
+  add_executable(h264swdec_decoder app/h264swdec.c)
+  target_compile_features(h264swdec_decoder PRIVATE c_std_99)
+  target_link_libraries(h264swdec_decoder PRIVATE H264SwDec::h264swdec)
+  set_target_properties(h264swdec_decoder PROPERTIES OUTPUT_NAME h264swdec)
+endif()
+
 if(BUILD_TESTING)
   add_executable(h264swdec_api_smoke test/api_smoke.c)
   target_link_libraries(h264swdec_api_smoke PRIVATE H264SwDec::h264swdec)
   add_test(NAME h264swdec.api_smoke COMMAND h264swdec_api_smoke)
+
+  if(H264SWDEC_BUILD_TOOLS)
+    add_test(
+      NAME h264swdec.posix_delayed_output
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DDECODER=$<TARGET_FILE:h264swdec_decoder>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/test/data/delayed_output.h264
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/delayed_output.yuv
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/test/check_decode.cmake
+    )
+    set_tests_properties(h264swdec.posix_delayed_output PROPERTIES TIMEOUT 30)
+
+    add_test(
+      NAME h264swdec.posix_invalid_stream
+      COMMAND
+        ${CMAKE_COMMAND}
+        -DDECODER=$<TARGET_FILE:h264swdec_decoder>
+        -DINPUT=${CMAKE_CURRENT_SOURCE_DIR}/test/data/invalid.h264
+        -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/invalid.yuv
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/test/check_invalid.cmake
+    )
+    set_tests_properties(h264swdec.posix_invalid_stream PROPERTIES TIMEOUT 30)
+  endif()
 endif()
 
 set(H264SWDEC_CMAKE_INSTALL_DIR
@@ -89,6 +128,11 @@ install(
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
   PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
+
+if(H264SWDEC_BUILD_TOOLS)
+  install(TARGETS h264swdec_decoder
+          RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
 
 install(
   EXPORT H264SwDecTargets
