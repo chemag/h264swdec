@@ -47,7 +47,6 @@
 /*------------------------------------------------------------------------------
     4. Function prototypes
 ------------------------------------------------------------------------------*/
-#ifndef H264DEC_OMXDL
 void h264bsdPredictSamples(
   u8 *data,
   mv_t *mv,
@@ -58,15 +57,6 @@ void h264bsdPredictSamples(
   u32 partY,
   u32 partWidth,
   u32 partHeight);
-#else
-void h264bsdPredictSamples(
-  u8 *data,
-  mv_t *mv,
-  image_t *refPic,
-  u32 colAndRow,/* packaged data | column    | row                |*/
-  u32 part,     /* packaged data |partX|partY|partWidth|partHeight|*/
-  u8 *pFill);
-#endif
 
 void h264bsdFillBlock(
   u8 * ref,
