@@ -186,7 +186,7 @@ u32 h264bsdDecodeExpGolombUnsigned(strmData_t *pStrmData, u32 *codeNum)
         if (bits == END_OF_STREAM)
             return(HANTRO_NOK);
 
-        *codeNum = (1 << numZeros) - 1 + bits;
+        *codeNum = (1U << numZeros) - 1U + bits;
 
     }
 
