@@ -123,6 +123,44 @@ The acceptance target is reliable decoding of the negotiated RTC subset, not
 complete support for every H264 profile and coding tool.
 
 
+# 4. Compliance
+
+h264swdec is compliant with the H264 Baseline and Constrained Baseline
+profiles, as measured by the [H.264.1 AVCV1 conformance suite (2016
+release)](http://handle.itu.int/11.1002/2000/9486).
+
+| Profile              | AVCV1 vectors | Bit-exact | Failures |
+|----------------------|---------------|-----------|----------|
+| Baseline             | 40            | 40        | 0        |
+| Constrained Baseline | 37            | 37        | 0        |
+
+Constrained Baseline is the H264 profile required by WebRTC (RFC 7742,
+`profile-level-id=42e01f`) and produced by Chrome through OpenH264. It is
+Baseline without flexible macroblock ordering (FMO), arbitrary slice order
+(ASO), and redundant slices. Of the 40 Baseline vectors, 37 use none of those
+tools, and 3 use FMO.
+
+* 31 vectors match the official reference YUV byte for byte. Two conformance
+  packages ship an alternate reference: `CVFC1_Sony_C_nogray.yuv` is the
+  cropped output, and `CVSE2_Sony_B-norpt.yuv` outputs each decoded frame once
+  instead of repeating frames as signaled by SEI `pic_struct`. Those are the
+  matching references for `AVCFC-1` and `AVCSE-1`.
+* 9 vectors ship no reference YUV. Their output is byte-identical to FFmpeg's
+  native H264 decoder, which matches the official reference on all 28
+  Constrained Baseline vectors that have one.
+* The vectors cover levels 1.0 through 3.1, at CIF resolution or smaller.
+
+The other 95 AVCV1 vectors use the Main or Extended profile (CABAC, B slices,
+interlaced coding, weighted prediction, or SP slices). They are outside this
+decoder's scope. The decoder rejects 93 of them with `H264SWDEC_STRM_ERR`
+instead of producing partial output, and 2 that use no unsupported tool decode
+bit-exactly.
+
+All 135 vectors decode with no crash, timeout, or AddressSanitizer or
+UndefinedBehaviorSanitizer report. The decoder is also fuzzed with libFuzzer;
+see `fuzz/README.md`.
+
+
 
 # Appendix 1. H264SwDec Upstream Provenance
 
