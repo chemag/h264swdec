@@ -12,6 +12,20 @@ include(GNUInstallDirs)
 
 option(H264SWDEC_CUSTOM_ALLOCATOR
        "Use an allocator implementation supplied by the final application" OFF)
+option(H264SWDEC_BUILD_FUZZERS
+       "Build libFuzzer targets; instruments every target with ASan and UBSan"
+       OFF)
+
+if(H264SWDEC_BUILD_FUZZERS)
+  if(NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
+    message(FATAL_ERROR "H264SWDEC_BUILD_FUZZERS requires Clang")
+  endif()
+  # Instrument the library as well as the fuzz targets. Only the fuzz targets
+  # link the libFuzzer entry point.
+  add_compile_options(-fsanitize=address,undefined,fuzzer-no-link
+                      -fno-sanitize-recover=all -fno-omit-frame-pointer -g)
+  add_link_options(-fsanitize=address,undefined)
+endif()
 
 set(
   H264SWDEC_SOURCES
@@ -179,6 +193,10 @@ if(BUILD_TESTING)
     set_tests_properties(h264swdec.posix_unsupported_b_slice
                          PROPERTIES TIMEOUT 30)
   endif()
+endif()
+
+if(H264SWDEC_BUILD_FUZZERS)
+  add_subdirectory(fuzz)
 endif()
 
 set(H264SWDEC_CMAKE_INSTALL_DIR
