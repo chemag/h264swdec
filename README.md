@@ -161,6 +161,121 @@ UndefinedBehaviorSanitizer report. The decoder is also fuzzed with libFuzzer;
 see `fuzz/README.md`.
 
 
+# 5. Memory Sizing
+
+The Zephyr port allocates all decoder memory from one static heap, sized at
+build time by `H264SWDEC_ZEPHYR_HEAP_BYTES`. The heap size is not derived from
+a profile level. It must cover the largest stream the application accepts, and
+there is no per-call or per-stream setting.
+
+| Configuration                     | `H264SWDEC_ZEPHYR_HEAP_BYTES` |
+|-----------------------------------|-------------------------------|
+| Zephyr port default               | 3,145,728 (3 MiB)             |
+| RT1170 WebRTC demo (`03_libpeer`) | 393,216 (384 KiB)             |
+
+
+## 5.1. What the Decoder Allocates
+
+On a 32-bit Cortex-M target, the decoder allocates approximately:
+
+```
+heap_bytes = 7,372 + 220 * N + (D + 1) * (384 * N + 47) + 16 * (D + 1)
+```
+
+where:
+
+* `N` is the picture size in macroblocks: `ceil(width / 16) *
+  ceil(height / 16)`.
+* `D` is the number of DPB frames. The decoder uses `max_dec_frame_buffering`
+  from the SPS VUI when present. Otherwise it uses the level's maximum DPB
+  size (`MaxDpbMbs` in Annex A) divided by the picture size, capped at 16.
+* `384 * N + 47` is one I420 frame plus alignment padding. The DPB holds
+  `D + 1` of them: `D` stored pictures plus the picture being decoded.
+* `220 * N` is per-macroblock state, and 7,372 bytes is the decoder
+  instance, one SPS with VUI, and one PPS.
+
+The model matches the board: at 320 by 240 with `D = 1` it predicts 303,898
+bytes, and the RT1170 measured 303,912 bytes in use during a 30-minute Chrome
+call. The struct sizes come from `arm-zephyr-eabi-gcc -mcpu=cortex-m7`; a
+64-bit host needs more for the pointer-bearing structures.
+
+Most of the memory is the DPB, so `D` matters as much as the resolution.
+Chrome's software H264 encoder, OpenH264, produced a one-frame DPB in the
+30-minute call: at 320 by 240, Level 3.1 alone would allow `D = 16`, and only
+`D = 1` matches the measured peak.
+
+
+## 5.2. What the Current Values Cover
+
+The demo's 393,216 bytes cover 320 by 240 only because the stream uses a
+one-frame DPB. The value corresponds to a picture size and DPB depth, not to
+a level:
+
+| Heap size         | `D = 1`                 | `D = 2`       | `D = 4`       | `D = 16`     |
+|-------------------|-------------------------|---------------|---------------|--------------|
+| 393,216 (demo)    | 390 MBs, e.g. 320x240   | 281 MBs       | 180 MBs       | 57 MBs       |
+| 3,145,728 (port)  | 3,176 MBs, e.g. 640x480 | 2,287 MBs     | 1,466 MBs     | 464 MBs      |
+
+For example, 320 by 240 (300 macroblocks) does not fit the demo heap with
+`D = 2`, and CIF (352 by 288, 396 macroblocks) does not fit even with
+`D = 1`. Neither value covers 1280 by 720.
+
+| Resolution | Macroblocks | `D = 1`   | `D = 2`   | `D = 4`   |
+|------------|-------------|-----------|-----------|-----------|
+| 320x240    | 300         | 303,898   | 419,161   | 649,687   |
+| 352x288    | 396         | 398,746   | 550,873   | 855,127   |
+| 640x360    | 920         | 916,458   | 1,269,801 | 1,976,487 |
+| 640x480    | 1,200       | 1,193,098 | 1,653,961 | 2,575,687 |
+| 1280x720   | 3,600       | 3,564,298 | 4,946,761 | 7,711,687 |
+
+
+## 5.3. Sizing for a Level
+
+To accept any conforming stream at a given level, size the heap for the worst
+case over every picture size the level allows, assuming no VUI limit on `D`.
+For each level the worst case is at its maximum frame size:
+
+| Level | Max frame size (MBs) | Worst case `D` | Heap bytes | MiB   |
+|-------|----------------------|----------------|------------|-------|
+| 1.0   | 99                   | 4              | 219,547    | 0.21  |
+| 1.1   | 396                  | 2              | 550,873    | 0.53  |
+| 1.2   | 396                  | 6              | 1,159,381  | 1.11  |
+| 1.3   | 396                  | 6              | 1,159,381  | 1.11  |
+| 2.0   | 396                  | 6              | 1,159,381  | 1.11  |
+| 2.1   | 792                  | 6              | 2,310,949  | 2.20  |
+| 2.2   | 1,620                | 5              | 4,096,630  | 3.91  |
+| 3.0   | 1,620                | 5              | 4,096,630  | 3.91  |
+| 3.1   | 3,600                | 5              | 9,094,150  | 8.67  |
+| 3.2   | 5,120                | 4              | 10,964,487 | 10.46 |
+| 4.0   | 8,192                | 4              | 17,538,567 | 16.73 |
+
+WebRTC's mandatory profile, `profile-level-id=42e01f`, is Constrained Baseline
+Level 3.1. A heap that accepts any stream Chrome may send at that level
+therefore needs about 9 MB. To extend the decoder to another level or
+resolution:
+
+1. Choose the largest stream to accept. Either take the worst case for its
+   level from the table above, or, if the sender is known to cap the DPB
+   through VUI, use the formula with that `D` and the largest resolution.
+2. Add headroom for the allocator. Zephyr's `sys_heap` metadata was about 200
+   bytes in the demo, but an SPS change frees and reallocates the DPB, which
+   can fragment the heap.
+3. Set `H264SWDEC_ZEPHYR_HEAP_BYTES`, and place the heap in memory large
+   enough to hold it. On the RT1170 that means external SDRAM.
+4. Confirm the peak on the target with `sys_heap_runtime_stats_get()` on
+   `h264swdec_heap`. The demo logs it as `decoder_peak`.
+
+To avoid sizing for a whole level, the receiver can instead limit what the
+sender produces, by negotiating a lower level or a `max-fs` limit in the SDP
+(RFC 6184).
+
+If a stream needs more memory than the heap holds, the decoder fails cleanly
+with `H264SWDEC_MEMFAIL` when it activates the SPS. It does not crash, but the
+stream cannot be decoded. The decoder does not enforce the level's frame size
+limit, so a non-conforming stream that exceeds its signaled level is bounded
+only by the heap.
+
+
 
 # Appendix 1. H264SwDec Upstream Provenance
 
