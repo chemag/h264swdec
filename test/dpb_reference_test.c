@@ -30,6 +30,17 @@ int main(void) {
     fprintf(stderr, "owned reference was rejected\n");
     return 1;
   }
+
+  /* Frame num gap handling exchanges data pointers between positions. */
+  buffer[0].data = ALIGN(second_data, 16);
+  buffer[1].data = ALIGN(first_data, 16);
+  if (h264bsdGetRefPicData(&dpb, 0) != buffer[0].data) {
+    fprintf(stderr, "exchanged DPB data was rejected\n");
+    return 1;
+  }
+  buffer[0].data = ALIGN(first_data, 16);
+  buffer[1].data = ALIGN(second_data, 16);
+
   if (h264bsdGetRefPicData(&dpb, TEST_REF_CAPACITY) != NULL) {
     fprintf(stderr, "out-of-range index was accepted\n");
     return 1;

@@ -873,8 +873,13 @@ u8* h264bsdGetRefPicData(dpbStorage_t *dpb, u32 index)
         return(NULL);
     }
 
-    if (picture->pAllocatedData == NULL ||
-        picture->data != ALIGN(picture->pAllocatedData, 16))
+    /* Frame num gap handling may exchange data pointers between buffer
+     * positions, so a valid picture can use any buffer the DPB allocated. */
+    for (i = 0; i <= dpb->dpbSize; i++)
+        if (dpb->buffer[i].pAllocatedData != NULL &&
+            picture->data == ALIGN(dpb->buffer[i].pAllocatedData, 16))
+            break;
+    if (i > dpb->dpbSize)
     {
         EPRINT("ref_pic_data");
         return(NULL);
