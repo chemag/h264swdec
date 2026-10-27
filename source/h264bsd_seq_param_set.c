@@ -307,13 +307,21 @@ u32 h264bsdDecodeSeqParamSet(strmData_t *pStrmData, seqParamSet_t *pSeqParamSet)
             return(tmp);
 
         /* check that frame cropping params are valid, parameters shall
-         * specify non-negative area within the original picture */
-        if ( ( (i32)pSeqParamSet->frameCropLeftOffset >
-               ( 8 * (i32)pSeqParamSet->picWidthInMbs -
-                 ((i32)pSeqParamSet->frameCropRightOffset + 1) ) ) ||
-             ( (i32)pSeqParamSet->frameCropTopOffset >
-               ( 8 * (i32)pSeqParamSet->picHeightInMbs -
-                 ((i32)pSeqParamSet->frameCropBottomOffset + 1) ) ) )
+         * specify non-negative area within the original picture. The
+         * offsets are read from the stream and can be up to 2^32 - 1, so
+         * compare them in unsigned arithmetic, without sums that can wrap.
+         * In 4:2:0 frame coding each offset unit is two pixels, so a
+         * macroblock is 8 units wide and high. */
+        if ( (pSeqParamSet->frameCropLeftOffset >=
+              8 * pSeqParamSet->picWidthInMbs) ||
+             (pSeqParamSet->frameCropRightOffset >=
+              8 * pSeqParamSet->picWidthInMbs -
+              pSeqParamSet->frameCropLeftOffset) ||
+             (pSeqParamSet->frameCropTopOffset >=
+              8 * pSeqParamSet->picHeightInMbs) ||
+             (pSeqParamSet->frameCropBottomOffset >=
+              8 * pSeqParamSet->picHeightInMbs -
+              pSeqParamSet->frameCropTopOffset) )
         {
             EPRINT("frame_cropping");
             return(HANTRO_NOK);

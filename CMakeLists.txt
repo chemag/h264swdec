@@ -183,6 +183,15 @@ if(BUILD_TESTING)
   add_test(NAME h264swdec.sps_size_limit
            COMMAND h264swdec_sps_size_limit_test)
 
+  add_executable(h264swdec_sps_crop_test test/sps_crop_test.c)
+  target_compile_features(h264swdec_sps_crop_test PRIVATE c_std_99)
+  target_include_directories(
+    h264swdec_sps_crop_test
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc ${CMAKE_CURRENT_SOURCE_DIR}/source
+  )
+  target_link_libraries(h264swdec_sps_crop_test PRIVATE H264SwDec::h264swdec)
+  add_test(NAME h264swdec.sps_crop COMMAND h264swdec_sps_crop_test)
+
   add_executable(h264swdec_dpb_reference_test test/dpb_reference_test.c)
   target_compile_features(h264swdec_dpb_reference_test PRIVATE c_std_99)
   target_include_directories(
