@@ -310,7 +310,10 @@ u32 h264bsdDecodeSeqParamSet(strmData_t *pStrmData, seqParamSet_t *pSeqParamSet)
                         pSeqParamSet->numRefFrames));
         value = pSeqParamSet->numRefFrames;
     }
-    pSeqParamSet->maxDpbSize = value;
+    /* num_ref_frames may be zero, but the DPB always holds at least one
+     * frame. A zero-size DPB makes the output loops in h264bsd_dpb.c spin
+     * forever. */
+    pSeqParamSet->maxDpbSize = MAX(1, value);
 
     tmp = h264bsdGetBits(pStrmData, 1);
     if (tmp == END_OF_STREAM)

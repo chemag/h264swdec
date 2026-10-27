@@ -147,6 +147,16 @@ if(BUILD_TESTING)
   target_link_libraries(h264swdec_vlc_test PRIVATE H264SwDec::h264swdec)
   add_test(NAME h264swdec.vlc COMMAND h264swdec_vlc_test)
 
+  add_executable(h264swdec_sps_dpb_size_test test/sps_dpb_size_test.c)
+  target_compile_features(h264swdec_sps_dpb_size_test PRIVATE c_std_99)
+  target_include_directories(
+    h264swdec_sps_dpb_size_test
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc ${CMAKE_CURRENT_SOURCE_DIR}/source
+  )
+  target_link_libraries(h264swdec_sps_dpb_size_test
+                        PRIVATE H264SwDec::h264swdec)
+  add_test(NAME h264swdec.sps_dpb_size COMMAND h264swdec_sps_dpb_size_test)
+
   add_executable(h264swdec_dpb_reference_test test/dpb_reference_test.c)
   target_compile_features(h264swdec_dpb_reference_test PRIVATE c_std_99)
   target_include_directories(
