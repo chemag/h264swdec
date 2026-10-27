@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(
   H264SwDec
-  VERSION 3.0
+  VERSION 3.1
   LANGUAGES C
 )
 
