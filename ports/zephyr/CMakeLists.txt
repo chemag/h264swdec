@@ -3,6 +3,12 @@
 
 set(H264SWDEC_ZEPHYR_HEAP_BYTES 3145728 CACHE STRING
     "Bytes reserved for the H264SwDec Zephyr heap")
+set(H264SWDEC_MAX_FRAME_WIDTH 4080 CACHE STRING
+    "Largest accepted coded picture width, in pixels")
+set(H264SWDEC_MAX_FRAME_HEIGHT 4080 CACHE STRING
+    "Largest accepted coded picture height, in pixels")
+set(H264SWDEC_MAX_FRAME_SIZE 8388608 CACHE STRING
+    "Largest accepted coded picture area, in pixels")
 
 set(H264SWDEC_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
 
@@ -58,6 +64,9 @@ target_compile_definitions(
   PRIVATE
     H264SWDEC_CUSTOM_ALLOCATOR=1
     H264SWDEC_ZEPHYR_HEAP_BYTES=${H264SWDEC_ZEPHYR_HEAP_BYTES}
+    H264SWDEC_MAX_FRAME_WIDTH=${H264SWDEC_MAX_FRAME_WIDTH}
+    H264SWDEC_MAX_FRAME_HEIGHT=${H264SWDEC_MAX_FRAME_HEIGHT}
+    H264SWDEC_MAX_FRAME_SIZE=${H264SWDEC_MAX_FRAME_SIZE}
 )
 
 target_compile_options(

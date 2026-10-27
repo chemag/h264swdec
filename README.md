@@ -271,9 +271,35 @@ sender produces, by negotiating a lower level or a `max-fs` limit in the SDP
 
 If a stream needs more memory than the heap holds, the decoder fails cleanly
 with `H264SWDEC_MEMFAIL` when it activates the SPS. It does not crash, but the
-stream cannot be decoded. The decoder does not enforce the level's frame size
-limit, so a non-conforming stream that exceeds its signaled level is bounded
-only by the heap.
+stream cannot be decoded.
+
+
+## 5.4. Maximum Picture Size
+
+The decoder rejects an SPS whose coded picture exceeds a maximum width,
+height, or area, before it allocates any memory for the picture. The decoder
+does not enforce the level's frame size limit, because encoders often signal
+the wrong level, so these limits are what bounds a broken or hostile SPS.
+
+| CMake cache variable         | Default               | Meaning                 |
+|------------------------------|-----------------------|-------------------------|
+| `H264SWDEC_MAX_FRAME_WIDTH`  | 4,080                 | Coded width, in pixels  |
+| `H264SWDEC_MAX_FRAME_HEIGHT` | 4,080                 | Coded height, in pixels |
+| `H264SWDEC_MAX_FRAME_SIZE`   | 8,388,608 (4096x2048) | Coded area, in pixels   |
+
+The defaults and the mechanism match libavc, the H264 decoder that replaced
+H264SwDec in Android. libavc rejects a stream whose resolution it does not
+support, but never one whose level is wrong.
+
+There is no minimum. The coded size is a whole number of 16 by 16
+macroblocks, so it cannot be smaller than 16 by 16, and the decoder handles
+cropping below that.
+
+The limits apply to the top-level build and to the Zephyr port, for example
+`-DH264SWDEC_MAX_FRAME_WIDTH=640 -DH264SWDEC_MAX_FRAME_HEIGHT=480
+-DH264SWDEC_MAX_FRAME_SIZE=307200`. Set them to the largest picture the heap
+is sized for, so an oversized stream is rejected at once instead of failing
+later with `H264SWDEC_MEMFAIL`.
 
 
 # 6. Versioning

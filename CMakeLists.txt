@@ -16,6 +16,21 @@ option(H264SWDEC_BUILD_FUZZERS
        "Build libFuzzer targets; instruments every target with ASan and UBSan"
        OFF)
 
+# Largest coded picture accepted from an SPS, in pixels. See source/h264bsd_cfg.h
+# and the Memory Sizing section of README.md. Applied to every target in this
+# project, so the unit tests check the configured values.
+set(H264SWDEC_MAX_FRAME_WIDTH 4080 CACHE STRING
+    "Largest accepted coded picture width, in pixels")
+set(H264SWDEC_MAX_FRAME_HEIGHT 4080 CACHE STRING
+    "Largest accepted coded picture height, in pixels")
+set(H264SWDEC_MAX_FRAME_SIZE 8388608 CACHE STRING
+    "Largest accepted coded picture area, in pixels")
+add_compile_definitions(
+  H264SWDEC_MAX_FRAME_WIDTH=${H264SWDEC_MAX_FRAME_WIDTH}
+  H264SWDEC_MAX_FRAME_HEIGHT=${H264SWDEC_MAX_FRAME_HEIGHT}
+  H264SWDEC_MAX_FRAME_SIZE=${H264SWDEC_MAX_FRAME_SIZE}
+)
+
 if(H264SWDEC_BUILD_FUZZERS)
   if(NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
     message(FATAL_ERROR "H264SWDEC_BUILD_FUZZERS requires Clang")
@@ -156,6 +171,17 @@ if(BUILD_TESTING)
   target_link_libraries(h264swdec_sps_dpb_size_test
                         PRIVATE H264SwDec::h264swdec)
   add_test(NAME h264swdec.sps_dpb_size COMMAND h264swdec_sps_dpb_size_test)
+
+  add_executable(h264swdec_sps_size_limit_test test/sps_size_limit_test.c)
+  target_compile_features(h264swdec_sps_size_limit_test PRIVATE c_std_99)
+  target_include_directories(
+    h264swdec_sps_size_limit_test
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc ${CMAKE_CURRENT_SOURCE_DIR}/source
+  )
+  target_link_libraries(h264swdec_sps_size_limit_test
+                        PRIVATE H264SwDec::h264swdec)
+  add_test(NAME h264swdec.sps_size_limit
+           COMMAND h264swdec_sps_size_limit_test)
 
   add_executable(h264swdec_dpb_reference_test test/dpb_reference_test.c)
   target_compile_features(h264swdec_dpb_reference_test PRIVATE c_std_99)

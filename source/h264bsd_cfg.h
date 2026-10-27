@@ -43,6 +43,21 @@
 #define MAX_NUM_SEQ_PARAM_SETS 32
 #define MAX_NUM_PIC_PARAM_SETS 256
 
+/* Largest coded picture accepted from a sequence parameter set, in pixels.
+ * An SPS that exceeds any of these limits is rejected while it is parsed,
+ * before the decoder allocates memory for the picture. The defaults match
+ * libavc (decoder/ih264d_defs.h). Override them at build time to match the
+ * memory available. */
+#ifndef H264SWDEC_MAX_FRAME_WIDTH
+#define H264SWDEC_MAX_FRAME_WIDTH 4080
+#endif
+#ifndef H264SWDEC_MAX_FRAME_HEIGHT
+#define H264SWDEC_MAX_FRAME_HEIGHT 4080
+#endif
+#ifndef H264SWDEC_MAX_FRAME_SIZE
+#define H264SWDEC_MAX_FRAME_SIZE (4096 * 2048)
+#endif
+
 /*------------------------------------------------------------------------------
     3. Data types
 ------------------------------------------------------------------------------*/

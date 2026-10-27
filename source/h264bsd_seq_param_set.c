@@ -240,12 +240,32 @@ u32 h264bsdDecodeSeqParamSet(strmData_t *pStrmData, seqParamSet_t *pSeqParamSet)
     tmp = h264bsdDecodeExpGolombUnsigned(pStrmData, &value);
     if (tmp != HANTRO_OK)
         return(tmp);
+    /* compare before adding one, so a huge value cannot wrap around */
+    if (value >= H264SWDEC_MAX_FRAME_WIDTH / 16)
+    {
+        EPRINT("pic_width_in_mbs_minus1");
+        return(HANTRO_NOK);
+    }
     pSeqParamSet->picWidthInMbs = value + 1;
 
     tmp = h264bsdDecodeExpGolombUnsigned(pStrmData, &value);
     if (tmp != HANTRO_OK)
         return(tmp);
+    if (value >= H264SWDEC_MAX_FRAME_HEIGHT / 16)
+    {
+        EPRINT("pic_height_in_map_units_minus1");
+        return(HANTRO_NOK);
+    }
     pSeqParamSet->picHeightInMbs = value + 1;
+
+    /* the picture area in macroblocks; divide instead of multiplying so the
+     * check cannot overflow */
+    if (pSeqParamSet->picHeightInMbs >
+        (H264SWDEC_MAX_FRAME_SIZE / 256) / pSeqParamSet->picWidthInMbs)
+    {
+        EPRINT("pic_size");
+        return(HANTRO_NOK);
+    }
 
     /* frame_mbs_only_flag, shall be 1 for baseline profile */
     tmp = h264bsdGetBits(pStrmData, 1);
