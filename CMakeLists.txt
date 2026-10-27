@@ -93,8 +93,12 @@ option(H264SWDEC_BUILD_TOOLS "Build the POSIX Annex B decoder"
        ${H264SWDEC_BUILD_TOOLS_DEFAULT})
 
 if(H264SWDEC_BUILD_TOOLS)
+  # https://cmake.org/cmake/help/latest/guide/tutorial/index.html#adding-a-version-number-and-configured-header-file
+  configure_file(app/config.h.in config.h)
   add_executable(h264swdec_decoder app/h264swdec.c)
   target_compile_features(h264swdec_decoder PRIVATE c_std_99)
+  target_include_directories(h264swdec_decoder
+                             PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
   target_link_libraries(h264swdec_decoder PRIVATE H264SwDec::h264swdec)
   set_target_properties(h264swdec_decoder PROPERTIES OUTPUT_NAME h264swdec)
 endif()
@@ -178,6 +182,12 @@ if(BUILD_TESTING)
         -P ${CMAKE_CURRENT_SOURCE_DIR}/test/check_decode.cmake
     )
     set_tests_properties(h264swdec.posix_delayed_output PROPERTIES TIMEOUT 30)
+
+    add_test(NAME h264swdec.posix_version
+             COMMAND h264swdec_decoder --version)
+    set_tests_properties(
+      h264swdec.posix_version
+      PROPERTIES PASS_REGULAR_EXPRESSION "^version: ${PROJECT_VERSION}\n$")
 
     add_test(
       NAME h264swdec.posix_invalid_stream

@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "H264SwDecApi.h"
+#include "config.h"
 
 typedef struct {
   FILE* file;
@@ -18,11 +19,12 @@ typedef struct {
 static void PrintUsage(const char* program) {
   fprintf(stderr,
           "Usage: %s [--crop] INPUT.h264 OUTPUT.yuv\n"
+          "       %s --version\n"
           "\n"
           "Decode an Annex B H.264 stream to planar I420. Use --crop to write\n"
           "the visible crop rectangle instead of the coded frame. Use - as\n"
           "OUTPUT.yuv to write I420 to standard output.\n",
-          program);
+          program, program);
 }
 
 static int ReadInput(const char* path, uint8_t** data, uint32_t* size) {
@@ -274,6 +276,11 @@ int main(int argc, char** argv) {
   OutputContext context;
   int crop = 0;
   int status = EXIT_FAILURE;
+
+  if (argc == 2 && strcmp(argv[1], "--version") == 0) {
+    fprintf(stdout, "version: %s\n", PROJECT_VERSION);
+    return EXIT_SUCCESS;
+  }
 
   if (argc == 4 && strcmp(argv[1], "--crop") == 0) {
     crop = 1;

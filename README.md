@@ -276,6 +276,19 @@ limit, so a non-conforming stream that exceeds its signaled level is bounded
 only by the heap.
 
 
+# 6. Versioning
+
+The package version is set in the top-level `CMakeLists.txt`, in
+`project(H264SwDec VERSION ...)`. It is exported as the CMake package version
+and the shared library version, and `h264swdec --version` prints it. Each
+release bumps the number in its own commit, named `h264swdec: version X.Y`,
+and is tagged `vX.Y`.
+
+The package version is separate from the decoder API version that
+`H264SwDecGetAPIVersion()` reports. The API version is still the one inherited
+from AOSP, 2.3, because the public API remains compatible with it.
+
+
 
 # Appendix 1. H264SwDec Upstream Provenance
 
